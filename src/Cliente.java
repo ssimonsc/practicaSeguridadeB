@@ -1,3 +1,5 @@
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
@@ -8,15 +10,32 @@ import java.util.Iterator;
 import java.util.Scanner;
 
 public class Cliente {
-    private static Socket meuSocket;
+    private static SSLSocket meuSocket;
     private static String pathCliente = "/home/ssimonsc/universidade/seguridade/cliente/";
+
     public static void main(String[] args) {
         int opcion = 5;
         try {
-            Servidor meuServidor = new Servidor();
-            meuServidor.start();
-            meuSocket = establecerSocket("localhost", 3000);
-            //  meuSocket.startHandshake(); // Protocolo SSL Handshake
+
+            definirKeyStores();
+
+           // Servidor meuServidor = new Servidor();
+           // meuServidor.start();
+            meuSocket = establecerSocket("localhost", 3030);
+            configurarSocketSSL();
+
+//            System.out.println ("CypherSuites");
+//            SSLContext context = SSLContext.getDefault();
+//            SSLSocketFactory sf = context.getSocketFactory();
+//            String[] cipherSuites = sf.getSupportedCipherSuites();
+//            for (int i=0; i<cipherSuites.length; i++)
+//                System.out.println (cipherSuites[i]);
+
+
+            System.out.println ("Comeza SSL Handshake");
+            meuSocket.startHandshake();
+            System.out.println ("Fin SSL Handshake");
+
             while (opcion !=0){
                 opcion = imprimirMenu();
                 elexirFuncion(opcion);
@@ -26,8 +45,59 @@ public class Cliente {
         }
     }
 
-    public static Socket establecerSocket(String host, int porto) throws  IOException {
-        return  new Socket(host, porto);
+    /******************************************************
+     definirKeyStores()
+     *******************************************************/
+    private static void definirKeyStores()
+    {
+
+        // Almacen de claves
+
+        System.setProperty("javax.net.ssl.keyStore",         pathCliente + "Keys/clienteKey.jce");
+        System.setProperty("javax.net.ssl.keyStoreType",     "JCEKS");
+        System.setProperty("javax.net.ssl.keyStorePassword", "nosoContrasinal");
+
+        // Almacen de confianza
+
+        System.setProperty("javax.net.ssl.trustStore",          pathCliente + "Keys/clientTrustStore.jce");
+        System.setProperty("javax.net.ssl.trustStoreType",     "JCEKS");
+        System.setProperty("javax.net.ssl.trustStorePassword", "nosoContrasinal");
+    }
+
+    public static SSLSocket establecerSocket(String host, int porto) throws  IOException {
+        SSLSocketFactory clienteFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+        return (SSLSocket) clienteFactory.createSocket(host, porto);
+    }
+
+    public static void configurarSocketSSL() throws IOException {
+        String[] enabled = meuSocket.getEnabledCipherSuites();
+        HashMap<Integer, String> selec = new HashMap<Integer, String>();
+        for (int i = 0; i < enabled.length; i++) {
+            System.out.println(i + "->" + enabled[i]);
+            selec.put(i, enabled[i]);
+        }
+
+        BufferedReader teclado = new BufferedReader(new InputStreamReader(System.in));
+//        Integer seleccion = Integer.parseInt(teclado.readLine());
+//
+//        String[] CipherSuite = new String[enabled.length + 1];
+//        CipherSuite[0] = selec.get(seleccion);
+//        System.out.println("Seleccionaches:  " + CipherSuite[0] + "\nDaraselle a maior prioridade posíbel.");
+//        // Cambiamos a prioridade de dito algoritmo para ser o de mais prioridade
+//        for (int i = 0; i < CipherSuite.length - 1; i++)
+//            CipherSuite[i + 1] = enabled[i];
+
+
+        String[]   cipherSuitesHabilitadas = {"TLS_RSA_WITH_AES_128_CBC_SHA"};
+        meuSocket.setEnabledCipherSuites(cipherSuitesHabilitadas);
+
+        SSLParameters params = meuSocket.getSSLParameters();
+        System.out.println("Desexa autentificacion do cliente?(si/non)");
+        if (teclado.readLine().equals("si"))
+            meuSocket.getSSLParameters().setNeedClientAuth(true);
+        else
+            meuSocket.getSSLParameters().setNeedClientAuth(false);
+        meuSocket.setSSLParameters(params);
     }
 
     public static int imprimirMenu() {
