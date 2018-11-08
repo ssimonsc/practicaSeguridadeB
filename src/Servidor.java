@@ -122,7 +122,7 @@ public class Servidor extends Thread {
                 kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
 
                 ks  = KeyStore.getInstance("JCEKS");
-                ks.load(new FileInputStream(path + "Keys/serverTrustStore.jce"), contrasinal);
+                ks.load(new FileInputStream(path + "Keys/serverKey.jce"), contrasinal);
 
                 kmf.init(ks, contrasinal);
 

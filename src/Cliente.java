@@ -1,10 +1,9 @@
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.*;
 import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.security.*;
+import java.security.cert.CertificateException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Scanner;
@@ -64,8 +63,20 @@ public class Cliente {
         System.setProperty("javax.net.ssl.trustStorePassword", "nosoContrasinal");
     }
 
-    public static SSLSocket establecerSocket(String host, int porto) throws  IOException {
-        SSLSocketFactory clienteFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+    public static SSLSocket establecerSocket(String host, int porto) throws IOException, NoSuchAlgorithmException, KeyStoreException, CertificateException, UnrecoverableKeyException, KeyManagementException {
+
+        SSLContext ctx;
+        KeyManagerFactory kmf;
+        KeyStore ks;
+
+        ctx = SSLContext.getInstance("TLS");
+        kmf = KeyManagerFactory.getInstance("SunX509");
+        ks = KeyStore.getInstance("JCEKS");
+        ks.load(new FileInputStream(pathCliente + "Keys/clienteKey.jce"), "nosoContrasinal".toCharArray());
+        kmf.init(ks, "nosoContrasinal".toCharArray());
+        ctx.init(kmf.getKeyManagers(), null, null);
+
+        SSLSocketFactory clienteFactory = ctx.getSocketFactory();
         return (SSLSocket) clienteFactory.createSocket(host, porto);
     }
 
@@ -75,6 +86,7 @@ public class Cliente {
         for (int i = 0; i < enabled.length; i++) {
             System.out.println(i + "->" + enabled[i]);
             selec.put(i, enabled[i]);
+
         }
 
         BufferedReader teclado = new BufferedReader(new InputStreamReader(System.in));
@@ -87,7 +99,6 @@ public class Cliente {
 //        for (int i = 0; i < CipherSuite.length - 1; i++)
 //            CipherSuite[i + 1] = enabled[i];
 
-
         String[]   cipherSuitesHabilitadas = {"TLS_RSA_WITH_AES_128_CBC_SHA"};
         meuSocket.setEnabledCipherSuites(cipherSuitesHabilitadas);
 
@@ -97,7 +108,7 @@ public class Cliente {
             meuSocket.getSSLParameters().setNeedClientAuth(true);
         else
             meuSocket.getSSLParameters().setNeedClientAuth(false);
-        meuSocket.setSSLParameters(params);
+    //    meuSocket.setSSLParameters(params);
     }
 
     public static int imprimirMenu() {
