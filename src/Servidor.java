@@ -1,16 +1,16 @@
 import javax.net.ServerSocketFactory;
-import javax.net.ssl.SSLServerSocket;
-import javax.net.ssl.SSLServerSocketFactory;
-import javax.net.ssl.SSLSocket;
+import javax.net.ssl.*;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.KeyStore;
 import java.util.HashMap;
+import javax.security.cert.X509Certificate;
 
 public class Servidor extends Thread {
-    private static ServerSocket meuServerSocket;
+    private static SSLServerSocket meuServerSocket;
     private static Socket cliente;
-    private static String path = "/home/ssimonsc/universidade/seguridade/servidor/docs/";
+    private static String path = "/home/ssimonsc/universidade/seguridade/servidor/";
     private static int idRexistro = 0;
     private static HashMap<Integer, Documentos> listaDocsPublicos = new HashMap<Integer, Documentos>();
     private static HashMap<Integer, Documentos> listaDocsPrivados = new HashMap<Integer, Documentos>();
@@ -18,7 +18,8 @@ public class Servidor extends Thread {
 
     public Servidor() {
         try {
-            meuServerSocket = establecerSocket(3000);
+            meuServerSocket = establecerSocket(3030);
+            meuServerSocket.setNeedClientAuth(true);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -27,12 +28,32 @@ public class Servidor extends Thread {
 
     public static void main(String args[]){
         try {
+            definirKeyStores();
+
             Servidor meuServidor = new Servidor();
             meuServidor.start();
 
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /******************************************************
+                    definirKeyStores()
+     *******************************************************/
+    private static void definirKeyStores()
+    {
+        // Almacen de claves
+
+        System.setProperty("javax.net.ssl.keyStore",         path + "Keys/serverKey.jce");
+        System.setProperty("javax.net.ssl.keyStoreType",     "JCEKS");
+        System.setProperty("javax.net.ssl.keyStorePassword", "nosoContrasinal");
+
+        // Almacen de confianza
+
+        System.setProperty("javax.net.ssl.trustStore",          path + "Keys/serverTrustStore.jce");
+        System.setProperty("javax.net.ssl.trustStoreType",     "JCEKS");
+        System.setProperty("javax.net.ssl.trustStorePassword", "nosoContrasinal");
     }
 
     public void run() {
@@ -76,10 +97,49 @@ public class Servidor extends Thread {
         }
     }
 
-    public static ServerSocket establecerSocket(int porto) throws IOException {
-       // ServerSocketFactory ssf = ServerSocketFactory.getDefault();
-        return new ServerSocket(porto);
+    public static SSLServerSocket establecerSocket(int porto) throws IOException {
+        SSLServerSocketFactory ssf =  obterServerSocketFactory("TLS");
+        return (SSLServerSocket) ssf.createServerSocket(porto);
     }
+
+    /******************************************************
+     obterServerSocketFactory(String type) {}
+     *****************************************************/
+    private static SSLServerSocketFactory obterServerSocketFactory(String type) {
+
+            SSLServerSocketFactory ssf = null;
+
+            try {
+
+                // Estabelecer o keymanager para a autenticacion do servidor
+
+                SSLContext ctx;
+                KeyManagerFactory kmf;
+                KeyStore ks;
+                char[] contrasinal = "nosoContrasinal".toCharArray();
+
+                ctx = SSLContext.getInstance("TLS");
+                kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+
+                ks  = KeyStore.getInstance("JCEKS");
+                ks.load(new FileInputStream(path + "Keys/serverKey.jce"), contrasinal);
+
+                kmf.init(ks, contrasinal);
+
+                ctx.init(kmf.getKeyManagers(), null, null);
+
+                ssf = ctx.getServerSocketFactory();
+
+            }
+            catch (Exception e) {
+
+                e.printStackTrace();
+
+            }
+
+            return ssf;
+    }
+
 
     public static Peticion procesarPeticion(InputStream in) throws IOException, ClassNotFoundException {
         ObjectInputStream ois = new ObjectInputStream(in);
@@ -88,7 +148,7 @@ public class Servidor extends Thread {
     }
 
     public static void rexistrar(Peticion peticion) throws IOException {
-        File arquivo = new File(path + peticion.getNomeArquivo());
+        File arquivo = new File(path + "docs/" + peticion.getNomeArquivo());
         FileOutputStream fos = new FileOutputStream(arquivo);
         fos.write(peticion.getArquivo());
 //        ObjectOutputStream oos = new ObjectOutputStream(fos);
@@ -125,14 +185,14 @@ public class Servidor extends Thread {
         int idRex = peticion.getIdRexistro();
         String nome = listaDocsXeral.get(idRex).getNomeArquivo();
 
-        arquivo = procesarArquivo(path + nome);
+        arquivo = procesarArquivo(path + "docs/" + nome);
 
         Resposta minhaResposta = new Resposta(nome, arquivo, firma);
         enviarResposta(minhaResposta);
     }
 
     public static byte[] procesarArquivo(String path) throws IOException {
-        File arquivo = new File(path);
+        File arquivo = new File(path + "docs/");
         byte[] arquivoByte = new byte[(int) arquivo.length()];
         FileInputStream FiS = new FileInputStream(arquivo);
         FiS.read(arquivoByte);
