@@ -3,7 +3,10 @@ import javax.net.ssl.*;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.security.KeyStore;
+import java.security.*;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.util.HashMap;
 import javax.security.cert.X509Certificate;
 
@@ -11,6 +14,9 @@ public class Servidor extends Thread {
     private static SSLServerSocket meuServerSocket;
     private static Socket cliente;
     private static String path = "/home/ssimonsc/universidade/seguridade/servidor/";
+    private static String nosoKeyStore = "Keys/serverKey.jce";
+    private static String nosoTrustStore = "Keys/serverTrustStore.jce";
+    private static String nosoContrasinal = "nosoContrasinal";
     private static int idRexistro = 0;
     private static HashMap<Integer, Documentos> listaDocsPublicos = new HashMap<Integer, Documentos>();
     private static HashMap<Integer, Documentos> listaDocsPrivados = new HashMap<Integer, Documentos>();
@@ -18,7 +24,7 @@ public class Servidor extends Thread {
 
     public Servidor() {
         try {
-            meuServerSocket = establecerSocket(3030);
+            meuServerSocket = establecerSocket(8000);
             meuServerSocket.setNeedClientAuth(true);
         } catch (IOException e) {
             e.printStackTrace();
@@ -45,15 +51,15 @@ public class Servidor extends Thread {
     {
         // Almacen de claves
 
-        System.setProperty("javax.net.ssl.keyStore",         path + "Keys/serverKey.jce");
+        System.setProperty("javax.net.ssl.keyStore",         path + nosoContrasinal);
         System.setProperty("javax.net.ssl.keyStoreType",     "JCEKS");
-        System.setProperty("javax.net.ssl.keyStorePassword", "nosoContrasinal");
+        System.setProperty("javax.net.ssl.keyStorePassword", nosoContrasinal);
 
         // Almacen de confianza
 
-        System.setProperty("javax.net.ssl.trustStore",          path + "Keys/serverTrustStore.jce");
+        System.setProperty("javax.net.ssl.trustStore",          path + nosoTrustStore);
         System.setProperty("javax.net.ssl.trustStoreType",     "JCEKS");
-        System.setProperty("javax.net.ssl.trustStorePassword", "nosoContrasinal");
+        System.setProperty("javax.net.ssl.trustStorePassword", nosoContrasinal);
     }
 
     public void run() {
@@ -71,6 +77,9 @@ public class Servidor extends Thread {
                     System.out.println("peticion recibida " + tipoPeticion);
                     switch (tipoPeticion) {
                         case "REXISTRAR":
+                            if(!verificarPeticion(peticion)) {
+                                break;
+                            }
                             rexistrar(peticion);
                             break;
 
@@ -89,7 +98,7 @@ public class Servidor extends Thread {
                             break;
                     }
                 }
-            } catch (IOException e) {
+            } catch (IOException | KeyStoreException | CertificateException | NoSuchAlgorithmException | SignatureException | InvalidKeyException e) {
                 e.printStackTrace();
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
@@ -147,12 +156,67 @@ public class Servidor extends Thread {
         return (peticion);
     }
 
+    public static boolean verificarPeticion(Peticion peticion) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException, SignatureException, InvalidKeyException {
+        byte[] arquivo = peticion.getArquivo();
+        byte[] firma = peticion.getFirma();
+        String certFirma = peticion.getCertFirma();
+
+        /* Verificamos a firma */
+
+        String algoritmo = "SHA1withRSA";
+        String keyName;
+
+            System.out.println(certFirma);
+
+        if (certFirma.contains("SANTIAG"))
+            keyName = "certificado_santiago";
+        else
+            keyName = "certificado_cliente";
+
+        // Obtener la clave privada del keystore
+
+        KeyStore ks = KeyStore.getInstance("JCEKS");
+
+        ks.load(new FileInputStream(path + nosoTrustStore), nosoContrasinal.toCharArray());
+
+        /*******************************************************************
+         *                   Verificacion
+         ******************************************************************/
+
+        System.out.println("***      Verificando:         *** ");
+
+        // Obter a clave publica do trustStore
+        PublicKey clavePublicaCliente = ks.getCertificate("clientekey").getPublicKey();
+
+        System.out.println("*** CLAVE PUBLICA DO CLIENTE ***");
+        System.out.println(clavePublicaCliente);
+
+        // Creamos un objeto para verificar
+        Signature verifier = Signature.getInstance(algoritmo);
+
+        // Inicializamos el objeto para verificar
+
+        verifier.initVerify(clavePublicaCliente);
+        verifier.update(arquivo);
+
+        boolean resultado = false;
+        // Verificamos & resultado
+
+        resultado = verifier.verify(firma);
+
+        if (resultado == true)
+            System.out.println("Firma CORRECTA");
+        else {
+            System.out.println("Firma NON correcta");
+        }
+
+        return resultado;
+    }
+
     public static void rexistrar(Peticion peticion) throws IOException {
         File arquivo = new File(path + "docs/" + peticion.getNomeArquivo());
         FileOutputStream fos = new FileOutputStream(arquivo);
         fos.write(peticion.getArquivo());
-//        ObjectOutputStream oos = new ObjectOutputStream(fos);
-//        oos.writeObject(peticion);
         fos.close();
 
         Documentos novoDocumento = new Documentos(idRexistro++, 0, peticion.getNomeArquivo(), peticion.getTipoConfifencial());
