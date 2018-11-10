@@ -4,12 +4,9 @@
     <list default="true" id="ff7fafa0-5c18-4072-99f1-02350511f495" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/out/production/PracticaSeguridade/Cliente.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/PracticaSeguridade/Cliente.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/PracticaSeguridade/Peticion.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/PracticaSeguridade/Peticion.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/out/production/PracticaSeguridade/Servidor.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/PracticaSeguridade/Servidor.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Cliente.class" beforeDir="false" afterPath="$PROJECT_DIR$/src/Cliente.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Cliente.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Cliente.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Peticion.class" beforeDir="false" afterPath="$PROJECT_DIR$/src/Peticion.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Peticion.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Peticion.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Servidor.class" beforeDir="false" afterPath="$PROJECT_DIR$/src/Servidor.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Servidor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Servidor.java" afterDir="false" />
     </list>
@@ -50,49 +47,43 @@
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="java" value="7418" />
+          <entry key="java" value="7483" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="JAVA" value="7418" />
+          <entry key="JAVA" value="7483" />
         </counts>
       </usages-collector>
     </session>
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/Cliente.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="115">
-              <caret line="188" column="52" lean-forward="true" selection-start-line="188" selection-start-column="52" selection-end-line="188" selection-end-column="52" />
+            <state relative-caret-position="-465">
+              <caret line="152" selection-start-line="152" selection-end-line="152" />
               <folding>
                 <element signature="imports" expanded="true" />
-                <element signature="method#establecerSocket#0;class#Cliente#0" />
-                <element signature="method#configurarSocketSSL#0;class#Cliente#0" />
-                <element signature="method#imprimirMenu#0;class#Cliente#0" />
-                <element signature="method#listarDocumentos#0;class#Cliente#0" />
-                <element signature="method#recuperarDocumento#0;class#Cliente#0" />
-                <element signature="method#sair#0;class#Cliente#0" />
-                <element signature="method#mostrarArquivosCliente#0;class#Cliente#0" />
-                <element signature="e#9705#9722#0" expanded="true" />
-                <element signature="method#procesarArquivo#0;class#Cliente#0" />
-                <element signature="method#enviarPeticion#0;class#Cliente#0" />
+                <element signature="e#3484#3501#0" expanded="true" />
+                <element signature="e#10234#10251#0" expanded="true" />
                 <element signature="method#procesarResposta#0;class#Cliente#0" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/Servidor.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="95">
-              <caret line="150" lean-forward="true" selection-start-line="150" selection-end-line="150" />
+            <state relative-caret-position="-1390">
+              <caret line="82" selection-start-line="82" selection-end-line="82" />
               <folding>
                 <element signature="imports" expanded="true" />
-                <element signature="method#obterServerSocketFactory#0;class#Servidor#0" />
+                <element signature="e#889#910#0" expanded="true" />
+                <element signature="e#993#1014#0" expanded="true" />
+                <element signature="e#1094#1115#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -127,14 +118,19 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/Peticion.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="339">
-              <caret line="47" selection-start-line="47" selection-end-line="47" />
+            <state relative-caret-position="255">
+              <caret line="17" column="35" lean-forward="true" selection-start-line="17" selection-start-column="35" selection-end-line="17" selection-end-column="35" />
               <folding>
-                <element signature="e#1003#1004#0" expanded="true" />
-                <element signature="e#1042#1043#0" expanded="true" />
-                <element signature="e#1076#1077#0" expanded="true" />
-                <element signature="e#1111#1112#0" expanded="true" />
-                <element signature="e#1199#1200#0" expanded="true" />
+                <element signature="e#930#931#0" expanded="true" />
+                <element signature="e#972#973#0" expanded="true" />
+                <element signature="e#1010#1011#0" expanded="true" />
+                <element signature="e#1050#1051#0" expanded="true" />
+                <element signature="e#1087#1088#0" expanded="true" />
+                <element signature="e#1126#1127#0" expanded="true" />
+                <element signature="e#1160#1161#0" expanded="true" />
+                <element signature="e#1195#1196#0" expanded="true" />
+                <element signature="e#1239#1240#0" expanded="true" />
+                <element signature="e#1283#1284#0" expanded="true" />
                 <element signature="e#1315#1316#0" expanded="true" />
                 <element signature="e#1343#1344#0" expanded="true" />
                 <element signature="e#1379#1380#0" expanded="true" />
@@ -172,8 +168,8 @@
       <find>serverTrustStore</find>
       <find>porto</find>
       <find>firmador</find>
-      <find>path</find>
       <find>establecerSocket</find>
+      <find>path</find>
     </findStrings>
     <replaceStrings>
       <replace>tipoConfidencialidade</replace>
@@ -201,7 +197,7 @@
   </component>
   <component name="ProjectFrameBounds" extendedState="4">
     <option name="y" value="27" />
-    <option name="width" value="960" />
+    <option name="width" value="1105" />
     <option name="height" value="1053" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
@@ -274,10 +270,9 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="27" width="960" height="1053" extended-state="4" />
-    <editor active="true" />
+    <frame x="0" y="27" width="1105" height="1053" extended-state="4" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.11597374" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.28234184" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Image Layers" order="2" />
       <window_info id="Designer" order="3" />
@@ -291,7 +286,7 @@
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
-      <window_info anchor="bottom" id="Terminal" order="7" weight="0.030270271" />
+      <window_info anchor="bottom" id="Terminal" order="7" weight="0.33837837" />
       <window_info anchor="bottom" id="Event Log" order="8" side_tool="true" />
       <window_info anchor="bottom" id="Version Control" order="9" show_stripe_button="false" />
       <window_info anchor="bottom" id="Messages" order="10" weight="0.32901832" />
@@ -313,15 +308,21 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/Cliente.java</url>
+          <line>194</line>
+          <properties />
+          <option name="timeStamp" value="12" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/Cliente.java</url>
           <line>397</line>
           <properties />
-          <option name="timeStamp" value="8" />
+          <option name="timeStamp" value="13" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/Servidor.java</url>
-          <line>179</line>
+          <line>82</line>
           <properties />
-          <option name="timeStamp" value="11" />
+          <option name="timeStamp" value="14" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
@@ -342,52 +343,14 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/DocumentoPublicos.java" />
-    <entry file="file://$PROJECT_DIR$/src/ClassServer.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="270">
-          <caret line="18" column="7" selection-start-line="18" selection-start-column="7" selection-end-line="18" selection-end-column="7" />
-          <folding>
-            <element signature="imports" expanded="true" />
-            <element signature="e#4534#4535#0" expanded="true" />
-            <element signature="e#4576#4577#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/ClassFileServer.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="111">
-          <caret line="156" column="61" selection-start-line="156" selection-start-column="52" selection-end-line="156" selection-end-column="61" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/src/ClassServer.java" />
+    <entry file="file://$PROJECT_DIR$/src/ClassFileServer.java" />
     <entry file="file://$PROJECT_DIR$/src/Resposta.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="45">
           <caret line="3" column="45" selection-start-line="3" selection-start-column="22" selection-end-line="3" selection-end-column="45" />
           <folding>
             <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/Peticion.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="339">
-          <caret line="47" selection-start-line="47" selection-end-line="47" />
-          <folding>
-            <element signature="e#1003#1004#0" expanded="true" />
-            <element signature="e#1042#1043#0" expanded="true" />
-            <element signature="e#1076#1077#0" expanded="true" />
-            <element signature="e#1111#1112#0" expanded="true" />
-            <element signature="e#1199#1200#0" expanded="true" />
-            <element signature="e#1315#1316#0" expanded="true" />
-            <element signature="e#1343#1344#0" expanded="true" />
-            <element signature="e#1379#1380#0" expanded="true" />
-            <element signature="e#1411#1412#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -404,34 +367,51 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/Servidor.java">
+    <entry file="file://$PROJECT_DIR$/src/Peticion.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="95">
-          <caret line="150" lean-forward="true" selection-start-line="150" selection-end-line="150" />
+        <state relative-caret-position="255">
+          <caret line="17" column="35" lean-forward="true" selection-start-line="17" selection-start-column="35" selection-end-line="17" selection-end-column="35" />
           <folding>
-            <element signature="imports" expanded="true" />
-            <element signature="method#obterServerSocketFactory#0;class#Servidor#0" />
+            <element signature="e#930#931#0" expanded="true" />
+            <element signature="e#972#973#0" expanded="true" />
+            <element signature="e#1010#1011#0" expanded="true" />
+            <element signature="e#1050#1051#0" expanded="true" />
+            <element signature="e#1087#1088#0" expanded="true" />
+            <element signature="e#1126#1127#0" expanded="true" />
+            <element signature="e#1160#1161#0" expanded="true" />
+            <element signature="e#1195#1196#0" expanded="true" />
+            <element signature="e#1239#1240#0" expanded="true" />
+            <element signature="e#1283#1284#0" expanded="true" />
+            <element signature="e#1315#1316#0" expanded="true" />
+            <element signature="e#1343#1344#0" expanded="true" />
+            <element signature="e#1379#1380#0" expanded="true" />
+            <element signature="e#1411#1412#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/Cliente.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="115">
-          <caret line="188" column="52" lean-forward="true" selection-start-line="188" selection-start-column="52" selection-end-line="188" selection-end-column="52" />
+        <state relative-caret-position="-465">
+          <caret line="152" selection-start-line="152" selection-end-line="152" />
           <folding>
             <element signature="imports" expanded="true" />
-            <element signature="method#establecerSocket#0;class#Cliente#0" />
-            <element signature="method#configurarSocketSSL#0;class#Cliente#0" />
-            <element signature="method#imprimirMenu#0;class#Cliente#0" />
-            <element signature="method#listarDocumentos#0;class#Cliente#0" />
-            <element signature="method#recuperarDocumento#0;class#Cliente#0" />
-            <element signature="method#sair#0;class#Cliente#0" />
-            <element signature="method#mostrarArquivosCliente#0;class#Cliente#0" />
-            <element signature="e#9705#9722#0" expanded="true" />
-            <element signature="method#procesarArquivo#0;class#Cliente#0" />
-            <element signature="method#enviarPeticion#0;class#Cliente#0" />
+            <element signature="e#3484#3501#0" expanded="true" />
+            <element signature="e#10234#10251#0" expanded="true" />
             <element signature="method#procesarResposta#0;class#Cliente#0" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/Servidor.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1390">
+          <caret line="82" selection-start-line="82" selection-end-line="82" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#889#910#0" expanded="true" />
+            <element signature="e#993#1014#0" expanded="true" />
+            <element signature="e#1094#1115#0" expanded="true" />
           </folding>
         </state>
       </provider>

@@ -164,16 +164,10 @@ public class Servidor extends Thread {
         /* Verificamos a firma */
 
         String algoritmo = "SHA1withRSA";
-        String keyName;
 
-            System.out.println(certFirma);
+        System.out.println(certFirma);
 
-        if (certFirma.contains("SANTIAG"))
-            keyName = "certificado_santiago";
-        else
-            keyName = "certificado_cliente";
-
-        // Obtener la clave privada del keystore
+        // Obtener la clave publica do trustStore
 
         KeyStore ks = KeyStore.getInstance("JCEKS");
 
