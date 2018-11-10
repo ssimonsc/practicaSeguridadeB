@@ -1,9 +1,13 @@
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.*;
 import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.*;
 import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Scanner;
@@ -11,6 +15,9 @@ import java.util.Scanner;
 public class Cliente {
     private static SSLSocket meuSocket;
     private static String pathCliente = "/home/ssimonsc/universidade/seguridade/cliente/";
+    private static String nosoKeyStore = "Keys/clienteKey.jce";
+    private static String nosoTrustStore = "Keys/clientTrustStore.jce";
+    private static String nosoContrasinal = "nosoContrasinal";
 
     public static void main(String[] args) {
         int opcion = 5;
@@ -20,7 +27,7 @@ public class Cliente {
 
            // Servidor meuServidor = new Servidor();
            // meuServidor.start();
-            meuSocket = establecerSocket("localhost", 3030);
+            meuSocket = establecerSocket("localhost", 8000);
             configurarSocketSSL();
 
 //            System.out.println ("CypherSuites");
@@ -52,15 +59,15 @@ public class Cliente {
 
         // Almacen de claves
 
-        System.setProperty("javax.net.ssl.keyStore",         pathCliente + "Keys/clienteKey.jce");
+        System.setProperty("javax.net.ssl.keyStore",         pathCliente + nosoKeyStore);
         System.setProperty("javax.net.ssl.keyStoreType",     "JCEKS");
-        System.setProperty("javax.net.ssl.keyStorePassword", "nosoContrasinal");
+        System.setProperty("javax.net.ssl.keyStorePassword", nosoContrasinal);
 
         // Almacen de confianza
 
-        System.setProperty("javax.net.ssl.trustStore",          pathCliente + "Keys/clientTrustStore.jce");
+        System.setProperty("javax.net.ssl.trustStore",          pathCliente + nosoTrustStore);
         System.setProperty("javax.net.ssl.trustStoreType",     "JCEKS");
-        System.setProperty("javax.net.ssl.trustStorePassword", "nosoContrasinal");
+        System.setProperty("javax.net.ssl.trustStorePassword", nosoContrasinal);
     }
 
     public static SSLSocket establecerSocket(String host, int porto) throws IOException, NoSuchAlgorithmException, KeyStoreException, CertificateException, UnrecoverableKeyException, KeyManagementException {
@@ -72,8 +79,8 @@ public class Cliente {
         ctx = SSLContext.getInstance("TLS");
         kmf = KeyManagerFactory.getInstance("SunX509");
         ks = KeyStore.getInstance("JCEKS");
-        ks.load(new FileInputStream(pathCliente + "Keys/clienteKey.jce"), "nosoContrasinal".toCharArray());
-        kmf.init(ks, "nosoContrasinal".toCharArray());
+        ks.load(new FileInputStream(pathCliente + nosoKeyStore), nosoContrasinal.toCharArray());
+        kmf.init(ks, nosoContrasinal.toCharArray());
         ctx.init(kmf.getKeyManagers(), null, null);
 
         SSLSocketFactory clienteFactory = ctx.getSocketFactory();
@@ -129,7 +136,7 @@ public class Cliente {
         }
     }
 
-    public static void elexirFuncion(int opcion) throws IOException, ClassNotFoundException {
+    public static void elexirFuncion(int opcion) throws Exception {
         switch (opcion) {
             case 1: rexistrarDocumento();
             break;
@@ -145,20 +152,25 @@ public class Cliente {
         }
     }
 
-    public static void rexistrarDocumento() throws IOException {
-        byte[] arquivo;
+    public static void rexistrarDocumento() throws Exception {
+        File arquivo;
+        byte[] arquivoByte;
+        byte[] arquivoCifrado;
         String nomeArquivo;
         boolean tipoConfidencialidade = false;
-        byte[] firma = new byte[2000];
+        byte[] firma;
+        String certFirma;
+        Peticion minhaPeticion;
 
         Scanner scanner = new Scanner(System.in);
 
-        System.out.println("\n\nIntroduza o path do ficheiro a rexistrar\n");
-        String path = scanner.nextLine();
-        arquivo = procesarArquivo(path);
+        arquivo = new File(mostrarArquivosCliente());
+        if(arquivo == null ) {
+            return;
+        }
+        arquivoByte = procesarArquivo(arquivo.getAbsolutePath());
 
-
-        System.out.println("\n\nIntroduza o nome do ficheiro a rexistrar\n");
+        System.out.println("\n\nIntroduza o nome co que quere rexistrar o ficheiro\n");
         nomeArquivo = scanner.nextLine();
 
         while(true) {
@@ -173,7 +185,22 @@ public class Cliente {
             break;
         }
 
-        Peticion minhaPeticion = new Peticion(nomeArquivo, arquivo, tipoConfidencialidade, firma);
+        /* Firmamos o documento */
+        firma = firmador(arquivo.getAbsolutePath());
+
+        /* Obtemos o certificado de firma */
+        certFirma = obterNomeCertificado();
+
+        /* Ciframos o documento  Ainda non funciona*/
+        if(tipoConfidencialidade) {
+//            arquivoCifrado = cifrador(arquivoByte);
+//             minhaPeticion = new Peticion(nomeArquivo, arquivoCifrado, tipoConfidencialidade, firma, certFirma);
+            minhaPeticion = new Peticion(nomeArquivo, arquivoByte, tipoConfidencialidade, firma, certFirma);
+
+        }
+        else
+         minhaPeticion = new Peticion(nomeArquivo, arquivoByte, tipoConfidencialidade, firma, certFirma);
+
         enviarPeticion(minhaPeticion);
     }
 
@@ -236,6 +263,30 @@ public class Cliente {
         enviarPeticion(minhaPeticion);
     }
 
+    private static String mostrarArquivosCliente() {
+        System.out.println("**** BENVIDO AO SEU CARTAFOL PERSOAL DE DOCUMENTOS ****");
+        HashMap<Integer, String> ficheiros = new HashMap<Integer, String>();
+        Scanner teclado = new Scanner(System.in);
+        File cartafol = new File(pathCliente + "docsCliente/");
+        int i = 1;
+        if (cartafol.listFiles().length == 0) {
+            System.out.println("\nNon ten documentos dispoñibeis");
+            return null;
+        }
+        for (final File fileEntry : cartafol.listFiles()) {
+            System.out.println("\nDocumentos dispoñibeis para o rexistro:");
+            ficheiros.put(i, fileEntry.getAbsolutePath());
+            System.out.println("\n\n" + i++ + "->" + fileEntry.getName());
+            System.out.println("\nElixa o documento desexado para o rexistro, seleccionando o número");
+        }
+        int seleccion = Integer.parseInt(teclado.nextLine());
+        if (ficheiros.containsKey(seleccion))
+            return ficheiros.get(seleccion);
+        else
+            return null;
+
+    }
+
     public static byte[] procesarArquivo(String path) throws IOException {
         File arquivo = new File(path);
         byte[] arquivoByte = new byte[(int) arquivo.length()];
@@ -244,6 +295,143 @@ public class Cliente {
         FiS.close();
 
         return  arquivoByte;
+    }
+
+    private static byte[] firmador(String path) throws KeyStoreException, NoSuchAlgorithmException, CertificateException,
+            IOException, InvalidKeyException, SignatureException, UnrecoverableEntryException {
+
+        FileInputStream arquivo = new FileInputStream(path);
+
+        String 		algoritmo        = "SHA1withRSA";
+        int    		longbloque;
+        byte   		bloque[]         = new byte[1024];
+        long   		filesize         = 0;
+
+        // Variables para el KeyStore
+
+        KeyStore    ks;
+        char[]      ks_password  	= nosoContrasinal.toCharArray();
+        char[]      key_password 	= nosoContrasinal.toCharArray();
+        String		entry_alias		= "clientekey";
+
+        System.out.println("******************************************* ");
+        System.out.println("*               FIRMA                     * ");
+        System.out.println("******************************************* ");
+
+        // Obter a clave privada do keystore
+
+        ks = KeyStore.getInstance("JCEKS");
+
+        ks.load(new FileInputStream(pathCliente + nosoKeyStore),  ks_password);
+
+        KeyStore.PrivateKeyEntry pkEntry = (KeyStore.PrivateKeyEntry)
+                ks.getEntry(entry_alias,
+                        new KeyStore.PasswordProtection(key_password));
+
+        PrivateKey privateKey = pkEntry.getPrivateKey();
+
+        // Visualizar clave privada
+
+        System.out.println("*** CLAVE PRIVADA ***");
+        System.out.println("Algoritmo de Firma (sen o Hash): " + privateKey.getAlgorithm());
+        System.out.println(privateKey);
+
+        // Creamos un obxeto para firmar
+
+        Signature signer = Signature.getInstance(algoritmo);
+
+        // Inicializamos el objeto para firmar
+        signer.initSign(privateKey);
+
+        // Para firmar primeiro pasamos o hash á mensaxe (metodo "update")
+        // e despois firmamos o hash (metodo sign).
+
+        byte[] firma = null;
+
+        while ((longbloque = arquivo.read(bloque)) > 0) {
+            filesize = filesize + longbloque;
+            signer.update(bloque, 0, longbloque);
+        }
+
+        firma = signer.sign();
+
+        arquivo.close();
+
+        return firma;
+    }
+
+    private static String obterNomeCertificado() throws NoSuchAlgorithmException, CertificateException, IOException, KeyStoreException {
+        String full_name = null;
+        KeyStore keystore = KeyStore.getInstance("JCEKS");
+        keystore.load(new FileInputStream(pathCliente + nosoKeyStore), nosoContrasinal.toCharArray());
+
+        Enumeration<String> enumeration = keystore.aliases();
+        while (enumeration.hasMoreElements()) {
+            String alias = enumeration.nextElement();
+            X509Certificate certificate = (X509Certificate) keystore.getCertificate(alias);
+
+            System.out.println ("CERTIFICADO: " +
+                    "\n -- Algoritmo Firma .... = " + certificate.getSigAlgName() +
+                    "\n -- Usuario ............ = " + certificate.getIssuerDN() +
+                    "\n -- Parametros Algoritmo = " + certificate.getSigAlgParams() +
+                    "\n -- Algoritmo de la PK.. = " + certificate.getPublicKey().getAlgorithm() +
+                    "\n -- Formato  ........... = " + certificate.getPublicKey().getFormat() +
+                    "\n -- Codificacion ....... = " + certificate.getPublicKey().getEncoded()
+            );
+
+            full_name = certificate.getSubjectX500Principal().getName();
+            System.out.println(full_name);
+            String[] splat = full_name.split(",");
+            for (String element : splat) {
+                if (element.startsWith("OU") || element.startsWith("O")) {
+                    full_name = element.substring(2, element.length() - 1);
+                }
+            }
+            break;
+
+        }
+        System.out.println(full_name);
+        return full_name;
+    }
+
+    private static byte[] cifrador(byte[] archivo) throws Exception {
+        String provider = "SunJCE";
+        String algoritmo = "RSA";
+        String transformacion = "/ECB/PKCS1Padding";
+
+        /************************************************************
+         * Xerar e almacear a clave
+         ************************************************************/
+
+        // Extraemos a clave do trustStore do cliente
+        char[] key_password = nosoContrasinal.toCharArray();
+
+        KeyStore ks;
+        ks = KeyStore.getInstance("JCEKS");
+        // Cargamos o trustStore
+        ks.load(new FileInputStream(pathCliente + nosoTrustStore), key_password);
+        System.out.println(ks);
+        KeyStore.SecretKeyEntry pkEntry = (KeyStore.SecretKeyEntry) ks.getEntry("serverkey",
+                new KeyStore.PasswordProtection(null));
+        byte[] kreg_raw = pkEntry.getSecretKey().getEncoded();
+
+        SecretKeySpec secretKeySpec = new SecretKeySpec(kreg_raw, algoritmo);
+
+        System.out.println("Obtivose a clave publica do servidor con exito");
+
+        /************************************************************
+                                     CIFRAR
+         ************************************************************/
+        Cipher cifrador = Cipher.getInstance(algoritmo + transformacion);
+        // Cifrase coa modalidade opaca da clave
+        cifrador.init(Cipher.ENCRYPT_MODE, secretKeySpec);
+
+        // int longbloque;
+        byte[] bloquecifrado = cifrador.update(archivo);
+
+        // Devolvemos el fichero cifrado
+        return bloquecifrado;
+
     }
 
     public static void  enviarPeticion(Peticion minhaPeticion) throws IOException {

@@ -6,14 +6,16 @@ public class Peticion  implements Serializable{
     private byte[] arquivo;
     private boolean tipoConfidencial;
     private byte[] firma;
+    private String certFirma;
     private int idRexistro;
 
-    public Peticion(String nomeArquivo, byte[] arquivo, boolean tipoConfidencial, byte[] firma){
+    public Peticion(String nomeArquivo, byte[] arquivo, boolean tipoConfidencial, byte[] firma, String certFirma){
         this.tipoPeticion = "REXISTRAR";
         this.nomeArquivo = nomeArquivo;
         this.arquivo = arquivo;
         this.tipoConfidencial= tipoConfidencial;
         this.firma = firma;
+        this.certFirma = certFirma;
     }
 
     public Peticion(boolean tipoConfidencial) {
@@ -44,6 +46,14 @@ public class Peticion  implements Serializable{
 
     public boolean getTipoConfifencial() {
         return this.tipoConfidencial;
+    }
+
+    public byte[] getFirma() {
+        return firma;
+    }
+
+    public String getCertFirma() {
+        return certFirma;
     }
 
     public int getIdRexistro() {
