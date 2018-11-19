@@ -410,21 +410,28 @@ public class Cliente {
         ks.load(new FileInputStream(pathCliente + nosoTrustStore), nosoContrasinal.toCharArray());
 
         // Obter a clave publica do trustStore
-        PublicKey clavePublicaServidor = ks.getCertificate("serverkey").getPublicKey();
 
-        System.out.println("*** CLAVE PUBLICA DO CLIENTE ***");
-        System.out.println(clavePublicaServidor);
+        // Obter a clave publica do trustStore
+        PublicKey clavePublicaServer = ks.getCertificate("serverkey").getPublicKey();
+
+        System.out.println("*** CLAVE PUBLICA DO SERVIDOR ***");
+        System.out.println(clavePublicaServer);
+//        PublicKey clavePublicaServidor = ks.getCertificate("serverkey").getPublicKey();
+//
+//        System.out.println("*** CLAVE PUBLICA DO CLIENTE ***");
+//        System.out.println(clavePublicaServidor);
 
         /************************************************************
                                      CIFRAR
          ************************************************************/
         Cipher cifrador = Cipher.getInstance(algoritmo + transformacion);
         // Cifrase coa modalidade opaca da clave
-        cifrador.init(Cipher.ENCRYPT_MODE, clavePublicaServidor);
+        cifrador.init(Cipher.ENCRYPT_MODE, clavePublicaServer);
 
         // int longbloque;
         byte[] bloquecifrado = cifrador.update(archivo);
 
+        System.out.println("Arquivo cifrado con éxito");
         // Devolvemos el fichero cifrado
         return bloquecifrado;
 
