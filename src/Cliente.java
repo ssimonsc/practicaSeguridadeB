@@ -193,9 +193,9 @@ public class Cliente {
 
         /* Ciframos o documento  Ainda non funciona*/
         if(tipoConfidencialidade) {
-//            arquivoCifrado = cifrador(arquivoByte);
-//             minhaPeticion = new Peticion(nomeArquivo, arquivoCifrado, tipoConfidencialidade, firma, certFirma);
-            minhaPeticion = new Peticion(nomeArquivo, arquivoByte, tipoConfidencialidade, firma, certFirma);
+            arquivoCifrado = cifrador(arquivoByte);
+             minhaPeticion = new Peticion(nomeArquivo, arquivoCifrado, tipoConfidencialidade, firma, certFirma);
+//            minhaPeticion = new Peticion(nomeArquivo, arquivoByte, tipoConfidencialidade, firma, certFirma);
 
         }
         else
@@ -340,7 +340,7 @@ public class Cliente {
 
         Signature signer = Signature.getInstance(algoritmo);
 
-        // Inicializamos el objeto para firmar
+        // Inicializamos o obxeto para firmar
         signer.initSign(privateKey);
 
         // Para firmar primeiro pasamos o hash á mensaxe (metodo "update")
@@ -403,32 +403,35 @@ public class Cliente {
          * Xerar e almacear a clave
          ************************************************************/
 
-        // Extraemos a clave do trustStore do cliente
-        char[] key_password = nosoContrasinal.toCharArray();
+        // Obtener la clave publica do trustStore
 
-        KeyStore ks;
-        ks = KeyStore.getInstance("JCEKS");
-        // Cargamos o trustStore
-        ks.load(new FileInputStream(pathCliente + nosoTrustStore), key_password);
-        System.out.println(ks);
-        KeyStore.SecretKeyEntry pkEntry = (KeyStore.SecretKeyEntry) ks.getEntry("serverkey",
-                new KeyStore.PasswordProtection(null));
-        byte[] kreg_raw = pkEntry.getSecretKey().getEncoded();
+        KeyStore ks = KeyStore.getInstance("JCEKS");
 
-        SecretKeySpec secretKeySpec = new SecretKeySpec(kreg_raw, algoritmo);
+        ks.load(new FileInputStream(pathCliente + nosoTrustStore), nosoContrasinal.toCharArray());
 
-        System.out.println("Obtivose a clave publica do servidor con exito");
+        // Obter a clave publica do trustStore
+
+        // Obter a clave publica do trustStore
+        PublicKey clavePublicaServer = ks.getCertificate("serverkey").getPublicKey();
+
+        System.out.println("*** CLAVE PUBLICA DO SERVIDOR ***");
+        System.out.println(clavePublicaServer);
+//        PublicKey clavePublicaServidor = ks.getCertificate("serverkey").getPublicKey();
+//
+//        System.out.println("*** CLAVE PUBLICA DO CLIENTE ***");
+//        System.out.println(clavePublicaServidor);
 
         /************************************************************
                                      CIFRAR
          ************************************************************/
         Cipher cifrador = Cipher.getInstance(algoritmo + transformacion);
         // Cifrase coa modalidade opaca da clave
-        cifrador.init(Cipher.ENCRYPT_MODE, secretKeySpec);
+        cifrador.init(Cipher.ENCRYPT_MODE, clavePublicaServer);
 
         // int longbloque;
         byte[] bloquecifrado = cifrador.update(archivo);
 
+        System.out.println("Arquivo cifrado con éxito");
         // Devolvemos el fichero cifrado
         return bloquecifrado;
 
