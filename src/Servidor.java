@@ -7,8 +7,9 @@ import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.util.Enumeration;
 import java.util.HashMap;
-import javax.security.cert.X509Certificate;
 
 public class Servidor extends Thread {
     private static SSLServerSocket meuServerSocket;
@@ -167,6 +168,11 @@ public class Servidor extends Thread {
 
         System.out.println(certFirma);
 
+        if(!certFirma.equalsIgnoreCase(obterNomeCertificado())) {
+            System.out.println("A firma non pertence ao Cliente. Desbotando peticion...");
+            return false;
+        }
+
         // Obtener la clave publica do trustStore
 
         KeyStore ks = KeyStore.getInstance("JCEKS");
@@ -206,6 +212,33 @@ public class Servidor extends Thread {
 
         return resultado;
     }
+
+    private static String obterNomeCertificado() throws NoSuchAlgorithmException, CertificateException, IOException, KeyStoreException {
+        String full_name = null;
+        KeyStore keystore = KeyStore.getInstance("JCEKS");
+        keystore.load(new FileInputStream(path + nosoTrustStore), nosoContrasinal.toCharArray());
+
+        Enumeration<String> enumeration = keystore.aliases();
+        while (enumeration.hasMoreElements()) {
+            String alias = enumeration.nextElement();
+            java.security.cert.X509Certificate certificate = (X509Certificate) keystore.getCertificate(alias);
+
+            System.out.println ("CERTIFICADO: " +
+                    "\n -- Algoritmo Firma .... = " + certificate.getSigAlgName() +
+                    "\n -- Usuario ............ = " + certificate.getIssuerDN() +
+                    "\n -- Parametros Algoritmo = " + certificate.getSigAlgParams() +
+                    "\n -- Algoritmo de la PK.. = " + certificate.getPublicKey().getAlgorithm() +
+                    "\n -- Formato  ........... = " + certificate.getPublicKey().getFormat() +
+                    "\n -- Codificacion ....... = " + certificate.getPublicKey().getEncoded()
+            );
+
+            full_name = certificate.getSubjectX500Principal().getName();
+            System.out.println(full_name);
+
+        }
+        return full_name;
+    }
+
 
     public static void rexistrar(Peticion peticion) throws IOException {
         File arquivo = new File(path + "docs/" + peticion.getNomeArquivo());

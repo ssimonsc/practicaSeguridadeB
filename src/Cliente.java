@@ -202,6 +202,7 @@ public class Cliente {
          minhaPeticion = new Peticion(nomeArquivo, arquivoByte, tipoConfidencialidade, firma, certFirma);
 
         enviarPeticion(minhaPeticion);
+
     }
 
     public static void listarDocumentos() throws IOException, ClassNotFoundException {
@@ -381,16 +382,8 @@ public class Cliente {
 
             full_name = certificate.getSubjectX500Principal().getName();
             System.out.println(full_name);
-            String[] splat = full_name.split(",");
-            for (String element : splat) {
-                if (element.startsWith("OU") || element.startsWith("O")) {
-                    full_name = element.substring(2, element.length() - 1);
-                }
-            }
-            break;
 
         }
-        System.out.println(full_name);
         return full_name;
     }
 
