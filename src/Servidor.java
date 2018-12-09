@@ -1,14 +1,15 @@
-import javax.net.ServerSocketFactory;
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.net.ssl.*;
 import java.io.*;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.*;
-import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.Calendar;
 import java.util.Enumeration;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 
 public class Servidor extends Thread {
@@ -103,6 +104,18 @@ public class Servidor extends Thread {
                 e.printStackTrace();
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
+            } catch (NoSuchPaddingException e) {
+                e.printStackTrace();
+            } catch (UnrecoverableEntryException e) {
+                e.printStackTrace();
+            } catch (NoSuchProviderException e) {
+                e.printStackTrace();
+            } catch (InvalidAlgorithmParameterException e) {
+                e.printStackTrace();
+            } catch (BadPaddingException e) {
+                e.printStackTrace();
+            } catch (IllegalBlockSizeException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -157,8 +170,9 @@ public class Servidor extends Thread {
         return (peticion);
     }
 
-    public static boolean verificarPeticion(Peticion peticion) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException, SignatureException, InvalidKeyException {
+    public static boolean verificarPeticion(Peticion peticion) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException, SignatureException, InvalidKeyException, NoSuchPaddingException, UnrecoverableEntryException, NoSuchProviderException, InvalidAlgorithmParameterException, BadPaddingException, IllegalBlockSizeException {
         byte[] arquivo = peticion.getArquivo();
+        byte[] arquivoDescifrado;
         byte[] firma = peticion.getFirma();
         String certFirma = peticion.getCertFirma();
 
@@ -172,6 +186,14 @@ public class Servidor extends Thread {
             System.out.println("A firma non pertence ao Cliente. Desbotando peticion...");
             return false;
         }
+
+        if(peticion.getTipoConfifencial())
+            arquivoDescifrado = arquivo;
+        else
+            arquivoDescifrado = arquivo;
+
+        System.out.println("Documento sen cifrar: ");
+        System.out.println(arquivoDescifrado);
 
         // Obtener la clave publica do trustStore
 
@@ -197,7 +219,7 @@ public class Servidor extends Thread {
         // Inicializamos el objeto para verificar
 
         verifier.initVerify(clavePublicaCliente);
-        verifier.update(arquivo);
+        verifier.update(arquivoDescifrado);
 
         boolean resultado = false;
         // Verificamos & resultado
@@ -240,13 +262,57 @@ public class Servidor extends Thread {
     }
 
 
-    public static void rexistrar(Peticion peticion) throws IOException {
+
+//    public static byte[] descifrador(byte[] arquivoCifrado) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException, UnrecoverableEntryException, NoSuchProviderException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+//        String provider = "SunJCE";
+//        String algoritmo = "RSA";
+//        String transformacion = "/ECB/PKCS1Padding";
+//
+//        System.out.println("\n\nDocumento cifrado: ");
+//        System.out.println(arquivoCifrado);
+//
+//        char[] key_password = nosoContrasinal.toCharArray();
+//        KeyStore ks;
+//        ks = KeyStore.getInstance("JCEKS");
+//
+//        // Cargamos el keystore
+//        ks.load(new FileInputStream(path + nosoKeyStore), key_password);
+//
+//        KeyStore.PrivateKeyEntry pkEntry = (KeyStore.PrivateKeyEntry)
+//                ks.getEntry("serverkey",
+//                        new KeyStore.PasswordProtection(key_password));
+//
+//
+//        PrivateKey privateKey = (PrivateKey) ks.getKey("serverkey", key_password);
+//        System.out.println("Clave privada: \n\n" + privateKey);
+//        // DESCIFRAR
+//        // *****************************************************************************
+//
+//        Cipher descifrador = Cipher.getInstance(algoritmo + transformacion);
+//
+//        descifrador.init(Cipher.DECRYPT_MODE, privateKey);
+//
+//      //  byte[] arquivoDescifrado = descifrador.update(arquivoCifrado);
+//        byte[] arquivoDescifrado = descifrador.doFinal(arquivoCifrado);
+//
+//        System.out.println("\n\nDocumento non cifrado: ");
+//        System.out.println(arquivoDescifrado);
+//
+//        System.out.println("Arquivo descifrado con éxito");
+//        return arquivoDescifrado;
+//    }
+
+
+    public static void rexistrar(Peticion peticion) throws IOException, CertificateException, InvalidKeyException, NoSuchAlgorithmException, KeyStoreException, SignatureException, UnrecoverableEntryException {
         File arquivo = new File(path + "docs/" + peticion.getNomeArquivo());
         FileOutputStream fos = new FileOutputStream(arquivo);
         fos.write(peticion.getArquivo());
         fos.close();
 
-        Documentos novoDocumento = new Documentos(idRexistro++, 0, peticion.getNomeArquivo(), peticion.getTipoConfifencial());
+        GregorianCalendar seloTemporal =  xerarSeloTemporal();
+        byte[] firma = firmador(idRexistro++, seloTemporal, peticion);
+
+        Documentos novoDocumento = new Documentos(idRexistro, 0, peticion.getNomeArquivo(), peticion.getTipoConfifencial());
         if (peticion.getTipoConfifencial())
             listaDocsPrivados.put(novoDocumento.getIdRexistro(), novoDocumento);
         else
@@ -296,5 +362,79 @@ public class Servidor extends Thread {
         OutputStream out = cliente.getOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(out);
         oos.writeObject(minhaResposta);
+    }
+
+    public static GregorianCalendar xerarSeloTemporal() {
+        GregorianCalendar data = new GregorianCalendar();
+        return data;
+    }
+
+    public static byte[] firmador(int idRexistro, GregorianCalendar seloTemporal, Peticion peticion) throws KeyStoreException, IOException, UnrecoverableEntryException, NoSuchAlgorithmException, SignatureException, InvalidKeyException, CertificateException {
+        byte[] arquivo = peticion.getArquivo();
+
+        String 		algoritmo        = "SHA1withRSA";
+        int    		longbloque;
+        byte   		bloque[]         = new byte[1024];
+        long   		filesize         = 0;
+
+        // Variables para el KeyStore
+
+        KeyStore    ks;
+        char[]      ks_password  	= nosoContrasinal.toCharArray();
+        char[]      key_password 	= nosoContrasinal.toCharArray();
+        String		entry_alias		= "serverKey";
+
+        System.out.println("******************************************* ");
+        System.out.println("*               FIRMA                     * ");
+        System.out.println("******************************************* ");
+
+        // Obter a clave privada do keystore
+
+        ks = KeyStore.getInstance("JCEKS");
+
+        ks.load(new FileInputStream(path + nosoKeyStore),  ks_password);
+
+        KeyStore.PrivateKeyEntry pkEntry = (KeyStore.PrivateKeyEntry)
+                ks.getEntry(entry_alias,
+                        new KeyStore.PasswordProtection(key_password));
+
+        PrivateKey privateKey = pkEntry.getPrivateKey();
+
+        // Visualizar clave privada
+
+        System.out.println("*** CLAVE PRIVADA ***");
+        System.out.println("Algoritmo de Firma (sen o Hash): " + privateKey.getAlgorithm());
+        System.out.println(privateKey);
+
+        // Creamos un obxeto para firmar
+
+        Signature signer = Signature.getInstance(algoritmo);
+
+        // Inicializamos o obxeto para firmar
+        signer.initSign(privateKey);
+
+        // Para firmar primeiro pasamos o hash á mensaxe (metodo "update")
+        // e despois firmamos o hash (metodo sign).
+
+        byte[] firma = null;
+
+
+        String dia = String.valueOf(seloTemporal.get(Calendar.DAY_OF_MONTH));
+        String mes = String.valueOf(seloTemporal.get(Calendar.MONTH) + 1);
+        String ano = String.valueOf(seloTemporal.get(Calendar.YEAR));
+        String hora = String.valueOf(seloTemporal.get(Calendar.HOUR_OF_DAY));
+        String minuto = String.valueOf(seloTemporal.get(Calendar.MINUTE));
+        String segundo = String.valueOf(seloTemporal.get(Calendar.SECOND));
+
+        String seloTemporalString = dia + "//" + mes + "//" + ano + " " + hora + ":" + minuto + ":" + segundo;
+
+        signer.update(arquivo);
+        signer.update(seloTemporalString.getBytes());
+        signer.update((byte) idRexistro);
+
+        firma = signer.sign();
+
+
+        return firma;
     }
 }
