@@ -25,8 +25,8 @@ public class Cliente {
 
             definirKeyStores();
 
-           // Servidor meuServidor = new Servidor();
-           // meuServidor.start();
+            // Servidor meuServidor = new Servidor();
+            // meuServidor.start();
             meuSocket = establecerSocket("localhost", 8000);
             configurarSocketSSL();
 
@@ -115,7 +115,7 @@ public class Cliente {
             meuSocket.getSSLParameters().setNeedClientAuth(true);
         else
             meuSocket.getSSLParameters().setNeedClientAuth(false);
-    //    meuSocket.setSSLParameters(params);
+        //    meuSocket.setSSLParameters(params);
     }
 
     public static int imprimirMenu() {
@@ -139,16 +139,16 @@ public class Cliente {
     public static void elexirFuncion(int opcion) throws Exception {
         switch (opcion) {
             case 1: rexistrarDocumento();
-            break;
+                break;
 
             case 2: recuperarDocumento();
-            break;
+                break;
 
             case 3: listarDocumentos();
-            break;
+                break;
 
             case 0: sair();
-            break;
+                break;
         }
     }
 
@@ -191,15 +191,18 @@ public class Cliente {
         /* Obtemos o certificado de firma */
         certFirma = obterNomeCertificado();
 
-        /* Ciframos o documento  Ainda non funciona*/
+        System.out.println("Documento sen cifrar: ");
+        System.out.println(arquivoByte);
+
+        /* Ciframos o documento */
         if(tipoConfidencialidade) {
-            arquivoCifrado = cifrador(arquivoByte);
-             minhaPeticion = new Peticion(nomeArquivo, arquivoCifrado, tipoConfidencialidade, firma, certFirma);
-//            minhaPeticion = new Peticion(nomeArquivo, arquivoByte, tipoConfidencialidade, firma, certFirma);
+            //  arquivoCifrado = cifrador(arquivoByte);
+//             minhaPeticion = new Peticion(nomeArquivo, arquivoCifrado, tipoConfidencialidade, firma, certFirma);
+            minhaPeticion = new Peticion(nomeArquivo, arquivoByte, tipoConfidencialidade, firma, certFirma);
 
         }
         else
-         minhaPeticion = new Peticion(nomeArquivo, arquivoByte, tipoConfidencialidade, firma, certFirma);
+            minhaPeticion = new Peticion(nomeArquivo, arquivoByte, tipoConfidencialidade, firma, certFirma);
 
         enviarPeticion(minhaPeticion);
 
@@ -387,48 +390,54 @@ public class Cliente {
         return full_name;
     }
 
-    private static byte[] cifrador(byte[] archivo) throws Exception {
-        String provider = "SunJCE";
-        String algoritmo = "RSA";
-        String transformacion = "/ECB/PKCS1Padding";
 
-        /************************************************************
-         * Xerar e almacear a clave
-         ************************************************************/
+    /*
 
-        // Obtener la clave publica do trustStore
-
-        KeyStore ks = KeyStore.getInstance("JCEKS");
-
-        ks.load(new FileInputStream(pathCliente + nosoTrustStore), nosoContrasinal.toCharArray());
-
-        // Obter a clave publica do trustStore
-
-        // Obter a clave publica do trustStore
-        PublicKey clavePublicaServer = ks.getCertificate("serverkey").getPublicKey();
-
-        System.out.println("*** CLAVE PUBLICA DO SERVIDOR ***");
-        System.out.println(clavePublicaServer);
-//        PublicKey clavePublicaServidor = ks.getCertificate("serverkey").getPublicKey();
+     * Cifra ben, pero o descifrador do server non funciona ben, polo tanto será o ultimo que faga
+     *
+     * */
+//    private static byte[] cifrador(byte[] archivo) throws Exception {
+//        String provider = "SunJCE";
+//        String algoritmo = "RSA";
+//       String transformacion = "/ECB/PKCS1Padding";
 //
-//        System.out.println("*** CLAVE PUBLICA DO CLIENTE ***");
-//        System.out.println(clavePublicaServidor);
-
-        /************************************************************
-                                     CIFRAR
-         ************************************************************/
-        Cipher cifrador = Cipher.getInstance(algoritmo + transformacion);
-        // Cifrase coa modalidade opaca da clave
-        cifrador.init(Cipher.ENCRYPT_MODE, clavePublicaServer);
-
-        // int longbloque;
-        byte[] bloquecifrado = cifrador.update(archivo);
-
-        System.out.println("Arquivo cifrado con éxito");
-        // Devolvemos el fichero cifrado
-        return bloquecifrado;
-
-    }
+//        /************************************************************
+//         * Xerar e almacear a clave
+//         ************************************************************/
+//
+//        // Obtener la clave publica do trustStore
+//
+//        KeyStore ks = KeyStore.getInstance("JCEKS");
+//
+//        ks.load(new FileInputStream(pathCliente + nosoTrustStore), nosoContrasinal.toCharArray());
+//
+//        // Obter a clave publica do trustStore
+//
+//        // Obter a clave publica do trustStore
+//        PublicKey clavePublicaServer = ks.getCertificate("serverkey").getPublicKey();
+//
+//        System.out.println("*** CLAVE PUBLICA DO SERVIDOR ***");
+//        System.out.println(clavePublicaServer);
+//
+////        PublicKey clavePublicaServidor = ks.getCertificate("serverkey").getPublicKey();
+////        System.out.println("*** CLAVE PUBLICA DO CLIENTE ***");
+////        System.out.println(clavePublicaServidor);
+//java
+//        /************************************************************
+//                                     CIFRAR
+//         ************************************************************/
+//        Cipher cifrador = Cipher.getInstance(algoritmo + transformacion);
+//        // Cifrase coa modalidade opaca da clave
+//        cifrador.init(Cipher.ENCRYPT_MODE, clavePublicaServer);
+//
+//        // int longbloque;
+//        byte[] bloquecifrado = cifrador.update(archivo);
+//
+//        System.out.println("Arquivo cifrado con éxito: " + bloquecifrado);
+//        // Devolvemos el fichero cifrado
+//        return bloquecifrado;
+//
+//    }
 
     public static void  enviarPeticion(Peticion minhaPeticion) throws IOException {
         OutputStream out = meuSocket.getOutputStream();
