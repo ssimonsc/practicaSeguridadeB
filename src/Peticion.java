@@ -18,13 +18,15 @@ public class Peticion  implements Serializable{
         this.certFirma = certFirma;
     }
 
-    public Peticion(boolean tipoConfidencial) {
+    public Peticion(boolean tipoConfidencial, String certFirma) {
         this.tipoPeticion = "LISTAR";
         this.tipoConfidencial = tipoConfidencial;
+        this.certFirma = certFirma;
     }
 
-    public Peticion(int idRexistro){
+    public Peticion(String certFirma, int idRexistro){
         this.tipoPeticion = "RECUPERAR";
+        this.certFirma = certFirma;
         this.idRexistro = idRexistro;
     }
 

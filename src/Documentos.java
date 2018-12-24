@@ -1,15 +1,19 @@
 import java.io.Serializable;
+import java.util.Date;
+import java.util.GregorianCalendar;
 
 public class Documentos implements Serializable {
     private int idRexistro;
-    private int idPropietario;
+    private String idPropietario;
     private String nomeArquivo;
+    private Date seloTemporal;
     private boolean tipoConfidencialidade;
 
-    public Documentos(int idRexistro, int idPropietario, String nomeArquivo, boolean tipoConfidencialidade) {
+    public Documentos(int idRexistro, String idPropietario, String nomeArquivo, Date seloTemporal, boolean tipoConfidencialidade) {
         this.idRexistro = idRexistro;
         this.idPropietario = idPropietario;
         this.nomeArquivo = nomeArquivo;
+        this.seloTemporal = seloTemporal;
         this.tipoConfidencialidade = tipoConfidencialidade;
     }
 
@@ -17,15 +21,22 @@ public class Documentos implements Serializable {
         return this.idRexistro;
     }
 
-    public int getIdPropietario() {
+    public String getIdPropietario() {
+
         return this.idPropietario;
     }
 
     public String getNomeArquivo() {
+
         return this.nomeArquivo;
     }
 
+    public Date getSeloTemporal() {
+        return seloTemporal;
+    }
+
     public boolean getTipoConfidencialidade() {
+
         return this.tipoConfidencialidade;
     }
 }
