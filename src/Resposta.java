@@ -82,6 +82,10 @@ public class Resposta implements Serializable {
         this.nomeArquivo = nomeArquivo;
     }
 
+    public void setArquivo(byte[] arquivo) {
+        this.arquivo = arquivo;
+    }
+
     public HashMap<Integer, Documentos> getListaDocs() {
 
         return this.listaDocs;

@@ -61,4 +61,8 @@ public class Peticion  implements Serializable{
     public int getIdRexistro() {
         return this.idRexistro;
     }
+
+    public void setArquivo(byte[] arquivo) {
+        this.arquivo = arquivo;
+    }
 }

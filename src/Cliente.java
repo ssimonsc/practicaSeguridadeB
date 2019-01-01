@@ -11,10 +11,7 @@ import java.net.UnknownHostException;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Scanner;
+import java.util.*;
 
 public class Cliente {
     private static SSLSocket meuSocket;
@@ -27,26 +24,12 @@ public class Cliente {
     public static void main(String[] args) {
         int opcion = 5;
         try {
-
             definirKeyStores();
-
-            // Servidor meuServidor = new Servidor();
-            // meuServidor.start();
             meuSocket = establecerSocket("localhost", 8000);
             configurarSocketSSL();
-
-//            System.out.println ("CypherSuites");
-//            SSLContext context = SSLContext.getDefault();
-//            SSLSocketFactory sf = context.getSocketFactory();
-//            String[] cipherSuites = sf.getSupportedCipherSuites();
-//            for (int i=0; i<cipherSuites.length; i++)
-//                System.out.println (cipherSuites[i]);
-
-
             System.out.println ("Comeza SSL Handshake");
             meuSocket.startHandshake();
             System.out.println ("Fin SSL Handshake");
-
             while (opcion !=0){
                 opcion = imprimirMenu();
                 elexirFuncion(opcion);
@@ -76,7 +59,6 @@ public class Cliente {
     }
 
     public static SSLSocket establecerSocket(String host, int porto) throws IOException, NoSuchAlgorithmException, KeyStoreException, CertificateException, UnrecoverableKeyException, KeyManagementException {
-
         SSLContext ctx;
         KeyManagerFactory kmf;
         KeyStore ks;
@@ -120,7 +102,6 @@ public class Cliente {
             meuSocket.getSSLParameters().setNeedClientAuth(true);
         else
             meuSocket.getSSLParameters().setNeedClientAuth(false);
-        //    meuSocket.setSSLParameters(params);
     }
 
     public static int imprimirMenu() {
@@ -180,12 +161,8 @@ public class Cliente {
         while(true) {
             System.out.println("\n\nQuere que o arquivo sexa privado? (si/non)\n");
             String privado = scanner.nextLine();
-            if(!privado.equalsIgnoreCase("si") && !privado.equalsIgnoreCase("non"))
-                continue;
-
-            if(privado.equalsIgnoreCase("si"))
-                tipoConfidencialidade = true;
-
+            if(!privado.equalsIgnoreCase("si") && !privado.equalsIgnoreCase("non")) continue;
+            if(privado.equalsIgnoreCase("si")) tipoConfidencialidade = true;
             break;
         }
 
@@ -195,17 +172,15 @@ public class Cliente {
         firmaCliente = firmador(arquivoByte);
         /* Ciframos o documento */
         if(tipoConfidencialidade) {
-            cifrador(arquivo.getAbsolutePath());
-            arquivoCifrado = procesarArquivo(pathCliente + "docsCliente/" + "temporalCifrado");
-            eliminarArquivo(pathCliente + "docsCliente/" + "temporalCifrado");
+            arquivoCifrado = cifrador(arquivo.getAbsolutePath());
             minhaPeticion = new Peticion(nomeArquivo, arquivoCifrado, tipoConfidencialidade, firmaCliente, certFirma);
         }
         else minhaPeticion = new Peticion(nomeArquivo, arquivoByte, tipoConfidencialidade, firmaCliente, certFirma);
 
-
         enviarPeticion(minhaPeticion);
-
+        System.out.println("Petición enviada con éxito\n");
         Resposta resposta = procesarResposta(meuSocket.getInputStream());
+        System.out.println("Resposta do servidor recibida\n");
         switch (resposta.getIdResposta()) {
             case 0: if(verificarResposta(resposta, minhaPeticion, arquivoByte)) eliminarArquivo(arquivo.getAbsolutePath());
                 break;
@@ -231,19 +206,19 @@ public class Cliente {
             } else if (tipo.toLowerCase().equalsIgnoreCase("privados")) {
                 tipoConfidencialidade = true;
                 break;
-            } else
-                System.out.println("Tipo non válido");
+            } else System.out.println("Tipo non válido");
         }
         String certFirma = obterNomeCertificado();
         Peticion minhaPeticion = new Peticion(tipoConfidencialidade, certFirma);
         enviarPeticion(minhaPeticion);
+        System.out.println("\nPetición enviada con éxito");
         InputStream in = meuSocket.getInputStream();
         Resposta resposta = procesarResposta(in);
-        System.out.println("resposta recibida");
+        System.out.println("\nResposta recibida");
 
         HashMap<Integer, Documentos> listaDoc = resposta.getListaDocs();
         Iterator it = listaDoc.keySet().iterator();
-        if (tipoConfidencialidade) System.out.println("Lista de documentos privados:\n\n");
+        if (tipoConfidencialidade) System.out.println("\n\nLista de documentos privados:\n");
         else System.out.println("Lista de documentos públicos:\n\n");
 
         while(it.hasNext()){
@@ -278,12 +253,7 @@ public class Cliente {
             return;
         }
 
-        if(resposta.isTipoConfidencial()) {
-            gardarArquivo("temporalCifrado", resposta.getArquivo());
-            descifradorAsimetrico(resposta.getNomeArquivo());
-            eliminarArquivo(pathCliente + "docsCliente/temporalCifrado");
-        }
-        else gardarArquivo(resposta.getNomeArquivo(), resposta.getArquivo());
+        gardarArquivo(resposta.getNomeArquivo(), resposta.getArquivo());
         System.out.println("DOCUMENTO RECUPERADO CORRECTAMENTE");
     }
 
@@ -299,65 +269,46 @@ public class Cliente {
         byte[] arquivo;
         String certFirma = resposta.getCertFirma();
 
-
         /* Verificamos a firma */
 
         String algoritmo = "SHA1withRSA";
-
-        System.out.println(certFirma);
-
-
-        // Obtener la clave publica do trustStore
+        // Obter a clave publica do trustStore
 
         KeyStore ks = KeyStore.getInstance("JCEKS");
-
         ks.load(new FileInputStream(pathCliente + nosoTrustStore), nosoContrasinalTS.toCharArray());
 
         /*******************************************************************
          *                   Verificacion
          ******************************************************************/
 
-        System.out.println("***      Verificando:         *** ");
+        System.out.println("***      Verificando Firma       *** ");
 
         // Obter a clave publica do trustStore
         PublicKey clavePublicaCliente = ks.getCertificate("server_cer").getPublicKey();
-
-        System.out.println("*** CLAVE PUBLICA DO SERVIDOR ***");
-        System.out.println(clavePublicaCliente);
 
         // Creamos un objeto para verificar
         Signature verifier = Signature.getInstance(algoritmo);
 
         // Inicializamos el objeto para verificar
         byte[] datos;
-        if(resposta.isTipoConfidencial()) {
-            gardarArquivo("temporalCifrado", resposta.getArquivo());
-            descifradorAsimetrico("temporalSenCifrar");
-            arquivo = procesarArquivo(pathCliente + "docsCliente/" + "temporalSenCifrar");
-            eliminarArquivo(pathCliente + "docsCliente/temporalCifrado");
-            eliminarArquivo(pathCliente + "docsCliente/temporalSenCifrar");
-            firma = firmador(arquivo);
-        } else {
-            arquivo = resposta.getArquivo();
-            firma = firmador(arquivo);
-        }
+        if(resposta.isTipoConfidencial()) resposta.setArquivo(descifradorAsimetrico(resposta.getArquivo()));
+        arquivo = resposta.getArquivo();
+        firma = firmador(arquivo);
         datos = getDatosComprobarFirma(resposta, arquivo, firma);
         verifier.initVerify(clavePublicaCliente);
 
         verifier.update(datos);
 
-        boolean resultado = false;
+        boolean resultado;
         // Verificamos & resultado
 
         resultado = verifier.verify(resposta.getFirma());
         return resultado;
     }
 
-    public static void descifradorAsimetrico(String nome) throws KeyStoreException, UnrecoverableEntryException, NoSuchAlgorithmException, IOException, NoSuchProviderException, NoSuchPaddingException, InvalidKeyException, CertificateException, BadPaddingException, IllegalBlockSizeException {
+    public static byte[] descifradorAsimetrico(byte[] arquivoCifrado) throws KeyStoreException, UnrecoverableEntryException, NoSuchAlgorithmException, IOException, NoSuchProviderException, NoSuchPaddingException, InvalidKeyException, CertificateException, BadPaddingException, IllegalBlockSizeException {
         String provider = "SunJCE";
         int longclave 			= 2048;               // NOTA -- Probar a subir este valor e ir viendo como
-        FileInputStream  ftextocifrado2 = new FileInputStream( pathCliente + "docsCliente/" + "temporalCifrado");
-        FileOutputStream ftextoclaro2 = new FileOutputStream( pathCliente + "docsCliente/" + nome);
 
         byte bloquecifrado2[] = new byte[longclave/8];
         byte bloqueclaro2[] = new byte[512];  // *** Buffer sobredimensionado ***
@@ -365,9 +316,6 @@ public class Cliente {
         String algoritmo 		= "RSA";
         String transformacion1 	= "/ECB/PKCS1Padding"; //Relleno de longitud fija de 88 bits (11 bytes)
         String transformacion2 	= "/ECB/OAEPPadding"; // Este relleno tiene una longitud mayor y es variable
-        int longbloque;
-        long t, tbi, tbf; 	    // tiempos totales y por bucle
-        double lf; 				// longitud del fichero
 
         KeyStore    ks;
         char[]      ks_password  	= nosoContrasinalKS.toCharArray();
@@ -378,54 +326,32 @@ public class Cliente {
         // Obter a clave privada do keystore
 
         ks = KeyStore.getInstance("JCEKS");
-
         ks.load(new FileInputStream(pathCliente + nosoKeyStore),  ks_password);
-
         KeyStore.PrivateKeyEntry pkEntry = (KeyStore.PrivateKeyEntry)
                 ks.getEntry(entry_alias,
                         new KeyStore.PasswordProtection(key_password));
 
         PrivateKey privateKey = pkEntry.getPrivateKey();
 
-
-        System.out.println("\n*** INICIO DESCIFRADO " + algoritmo + "-" + longclave + " ************");
-
         Cipher descifrador = Cipher.getInstance(algoritmo +
                         transformacion1,
                 provider);
-
         descifrador.init(Cipher.DECRYPT_MODE, privateKey);
 
-
-        // Datos para medidas de velocidad descifrado
-        t = 0; lf = 0; tbi = 0;  tbf = 0;
-
-        while ((longbloque = ftextocifrado2.read(bloquecifrado2)) > 0) {
-
-            lf = lf + longbloque;
-
-            tbi = System.nanoTime();
-
-            bloqueclaro2 = descifrador.update(bloquecifrado2, 0, longbloque);
+        ArrayList<byte[]> bloquesDescifrados = new ArrayList<>();
+        int n = 0;
+        while (n < arquivoCifrado.length) {
+            for(int i = 0; i < 256; i++) bloquecifrado2[i] = arquivoCifrado[i + n];
+            n += 256;
+            bloqueclaro2 = descifrador.update(bloquecifrado2, 0, 256);
             bloqueclaro2 = descifrador.doFinal();
-
-            tbf = System.nanoTime();
-            t = t + tbf - tbi;
-
-            ftextoclaro2.write(bloqueclaro2);
+            bloquesDescifrados.add(bloqueclaro2);
         }
 
-
-        ftextocifrado2.close();
-        ftextoclaro2.close();
-
-        // Escribir resultados medida velocidad descifrado
-
-        System.out.println("*** FIN DESCIFRADO " + algoritmo + "-" + longclave
-                + " Provider: " + provider);
-        System.out.println("Bytes  descifrados = " + (int) lf);
-        System.out.println("Tiempo descifrado  = " + t / 1000000 + " mseg");
-        System.out.println("Velocidad = " + (lf * 8 * 1000) / t + " Mpbs");
+        byte[] arquivoDescifrado = new byte[(245 * (bloquesDescifrados.size()-1)) + bloquesDescifrados.get(bloquesDescifrados.size()-1).length];
+        for(int i = 0 ; i < bloquesDescifrados.size(); i++)
+            for (int j = 0; j < bloquesDescifrados.get(i).length; j++) arquivoDescifrado[j + (245 * i)] = bloquesDescifrados.get(i)[j];
+        return arquivoDescifrado;
     }
 
     public static void sair() throws IOException {
@@ -468,7 +394,6 @@ public class Cliente {
         FileInputStream FiS = new FileInputStream(arquivo);
         FiS.read(arquivoByte);
         FiS.close();
-
         return  arquivoByte;
     }
 
@@ -476,9 +401,6 @@ public class Cliente {
     private static byte[] firmador(byte[] arquivo) throws KeyStoreException, NoSuchAlgorithmException, CertificateException,
             IOException, InvalidKeyException, SignatureException, UnrecoverableEntryException {
         String 		algoritmo        = "SHA1withRSA";
-        int    		longbloque;
-        byte   		bloque[]         = new byte[1024];
-        long   		filesize         = 0;
         KeyStore    ks;
         char[]      ks_password  	= nosoContrasinalKS.toCharArray();
         char[]      key_password 	= nosoContrasinalKS.toCharArray();
@@ -493,21 +415,18 @@ public class Cliente {
         PrivateKey privateKey = pkEntry.getPrivateKey();
         Signature signer = Signature.getInstance(algoritmo);
         signer.initSign(privateKey);
-        byte[] firma = null;
+        byte[] firma;
         signer.update(arquivo);
         firma = signer.sign();
         return firma;
     }
 
-    public static boolean verificarResposta(Resposta resposta, Peticion peticion, byte[] arquivo) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException, SignatureException, InvalidKeyException, NoSuchPaddingException, UnrecoverableEntryException, NoSuchProviderException, InvalidAlgorithmParameterException, BadPaddingException, IllegalBlockSizeException {
-        byte[] firma = resposta.getFirma();
+    public static boolean verificarResposta(Resposta resposta, Peticion peticion, byte[] arquivo) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException, SignatureException, InvalidKeyException {
         String certFirma = resposta.getCertFirma();
 
         /* Verificamos a firma */
 
         String algoritmo = "SHA1withRSA";
-
-        System.out.println(certFirma);
 
         if(!(comprobarCertificado(certFirma))) {
             System.out.println("CERTIFICADO DE REXISTRO INCORRECTO");
@@ -524,14 +443,10 @@ public class Cliente {
          *                   Verificacion
          ******************************************************************/
 
-        System.out.println("***      Verificando:         *** ");
+        System.out.println("\n***      Verificando Firma da Resposta:         ***\n");
 
         // Obter a clave publica do trustStore
         PublicKey clavePublicaCliente = ks.getCertificate("server_cer").getPublicKey();
-
-        System.out.println("*** CLAVE PUBLICA DO SERVIDOR ***");
-        System.out.println(clavePublicaCliente);
-
         // Creamos un objeto para verificar
         Signature verifier = Signature.getInstance(algoritmo);
 
@@ -545,12 +460,8 @@ public class Cliente {
         // Verificamos & resultado
 
         resultado = verifier.verify(resposta.getFirma());
-
-        if (resultado == true)
-            System.out.println("Documento correctamente rexistrado co número " + resposta.getIdRexistro());
-        else {
-            System.out.println("FIRMA INCORRECTA DO REXISTRADOR");
-        }
+        if (resultado == true) System.out.println("\t\tFirma Correcta\n\nDocumento correctamente rexistrado co número " + resposta.getIdRexistro());
+        else System.out.println("FIRMA INCORRECTA DO REXISTRADOR");
 
         return resultado;
     }
@@ -574,7 +485,7 @@ public class Cliente {
     }
 
     private static boolean comprobarCertificado(String cert) throws NoSuchAlgorithmException, CertificateException, IOException, KeyStoreException {
-        String full_name = null;
+        String full_name;
         KeyStore keystore = KeyStore.getInstance("JCEKS");
         keystore.load(new FileInputStream(pathCliente + nosoTrustStore), nosoContrasinalTS.toCharArray());
 
@@ -582,20 +493,8 @@ public class Cliente {
         while (enumeration.hasMoreElements()) {
             String alias = enumeration.nextElement();
             java.security.cert.X509Certificate certificate = (X509Certificate) keystore.getCertificate(alias);
-
-            System.out.println ("CERTIFICADO: " +
-                    "\n -- Algoritmo Firma .... = " + certificate.getSigAlgName() +
-                    "\n -- Usuario ............ = " + certificate.getIssuerDN() +
-                    "\n -- Parametros Algoritmo = " + certificate.getSigAlgParams() +
-                    "\n -- Algoritmo de la PK.. = " + certificate.getPublicKey().getAlgorithm() +
-                    "\n -- Formato  ........... = " + certificate.getPublicKey().getFormat() +
-                    "\n -- Codificacion ....... = " + certificate.getPublicKey().getEncoded()
-            );
-
             full_name = certificate.getSubjectX500Principal().getName();
-            System.out.println(full_name);
             if(full_name.equalsIgnoreCase(cert)) return true;
-
         }
         return false;
     }
@@ -609,45 +508,28 @@ public class Cliente {
         while (enumeration.hasMoreElements()) {
             String alias = enumeration.nextElement();
             X509Certificate certificate = (X509Certificate) keystore.getCertificate(alias);
-
-            System.out.println ("CERTIFICADO: " +
-                    "\n -- Algoritmo Firma .... = " + certificate.getSigAlgName() +
-                    "\n -- Usuario ............ = " + certificate.getIssuerDN() +
-                    "\n -- Parametros Algoritmo = " + certificate.getSigAlgParams() +
-                    "\n -- Algoritmo de la PK.. = " + certificate.getPublicKey().getAlgorithm() +
-                    "\n -- Formato  ........... = " + certificate.getPublicKey().getFormat() +
-                    "\n -- Codificacion ....... = " + certificate.getPublicKey().getEncoded()
-            );
-
             full_name = certificate.getSubjectX500Principal().getName();
-            System.out.println(full_name);
-
         }
         return full_name;
     }
 
 
     /*
-
      * Cifra ben, pero o descifrador do server non funciona ben, polo tanto será o ultimo que faga
      *
      * */
-    private static void cifrador(String path) throws Exception {
-        String provider = "SunJCE";
-        FileInputStream 	ftextoclaro 	= new FileInputStream(path);
-        FileOutputStream 	ftextocifrado 	= new FileOutputStream(pathCliente + "docsCliente/" +  "temporalCifrado");
+    private static byte[] cifrador(String path) throws Exception {
+        FileInputStream ftextoclaro = new FileInputStream(path);
 
-        String algoritmo 		= "RSA";
-        String transformacion1 	= "/ECB/PKCS1Padding"; //Relleno de longitud fija de 88 bits (11 bytes)
-        String transformacion2 	= "/ECB/OAEPPadding"; // Este relleno tiene una longitud mayor y es variable
-        int longclave 			= 2048;               // NOTA -- Probar a subir este valor e ir viendo como
+        String algoritmo = "RSA";
+        String transformacion1 = "/ECB/PKCS1Padding"; //Relleno de longitud fija de 88 bits (11 bytes)
+        String transformacion2 = "/ECB/OAEPPadding"; // Este relleno tiene una longitud mayor y es variable
+        int longclave = 2048;               // NOTA -- Probar a subir este valor e ir viendo como
         //         disminuye significativamente la velocidad de descifrado
         int longbloque;
-        long t, tbi, tbf; 	    // tiempos totales y por bucle
-        double lf; 				// longitud del fichero
 
-        byte bloqueclaro[] 		= new byte[(longclave/8) - 11]; // *** NOTA: Calculo solo valido para relleno PKCS1Padding ****
-        byte bloquecifrado[] 	= new byte[2048];
+        byte bloqueclaro[] = new byte[(longclave / 8) - 11]; // *** NOTA: Calculo solo valido para relleno PKCS1Padding ****
+        byte bloquecifrado[] = new byte[2048];
 
         /************************************************************
          * Xerar e almacear a clave
@@ -660,57 +542,33 @@ public class Cliente {
         ks.load(new FileInputStream(pathCliente + nosoTrustStore), nosoContrasinalTS.toCharArray());
 
         // Obter a clave publica do trustStore
-
-        // Obter a clave publica do trustStore
         PublicKey clavePublicaServer = ks.getCertificate("server_cer").getPublicKey();
 
-        System.out.println("*** CLAVE PUBLICA DO SERVIDOR ***");
-        System.out.println(clavePublicaServer);
-
-
         /************************************************************
-         CIFRAR
+                                         CIFRAR
          ************************************************************/
-        System.out.println("*** INICIO CIFRADO " + algoritmo + "-" + longclave
-                + " ************");
 
         Cipher cifrador = Cipher.getInstance(algoritmo +
                 transformacion1);
 
-        // Se cifra con la modalidad opaca de la clave
+        // Se cifra coa modalidade opaca da clave
 
         cifrador.init(Cipher.ENCRYPT_MODE, clavePublicaServer);
 
-
-        // Datos para medidas de velocidad cifrado
-        t = 0; lf = 0; tbi = 0;  tbf = 0;
-
+        ArrayList<byte[]> bloquesCifrados = new ArrayList<>();
         while ((longbloque = ftextoclaro.read(bloqueclaro)) > 0) {
-
-            lf = lf + longbloque;
-
-            tbi = System.nanoTime();
-
             bloquecifrado = cifrador.update(bloqueclaro, 0, longbloque);
             bloquecifrado = cifrador.doFinal();
-
-            tbf = System.nanoTime();
-            t = t + tbf - tbi;
-
-            ftextocifrado.write(bloquecifrado);
+            bloquesCifrados.add(bloquecifrado);
         }
 
-        // Escribir resultados velocidad cifrado
-
-        System.out.println("*** FIN CIFRADO " + algoritmo + "-" + longclave
-                + " Provider: " + provider);
-        System.out.println("Bytes  cifrados = " + (int) lf);
-        System.out.println("Tiempo cifrado  = " + t / 1000000 + " mseg");
-        System.out.println("Velocidad       = " + (lf * 8 * 1000) / t + " Mpbs");
-
         // Cerrar ficheros
-        ftextocifrado.close();
         ftextoclaro.close();
+
+        byte[] arquivoCifrado = new byte[256 * bloquesCifrados.size()];
+        for (int i = 0; i < bloquesCifrados.size(); i++)
+            for (int j = 0; j < bloquesCifrados.get(i).length; j++) arquivoCifrado[j + (256 * i)] = bloquesCifrados.get(i)[j];
+        return arquivoCifrado;
     }
 
     public static void  enviarPeticion(Peticion minhaPeticion) throws IOException {

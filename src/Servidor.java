@@ -224,11 +224,8 @@ public class Servidor extends Thread {
         verifier.initVerify(clavePublicaCliente);
 
         if(peticion.getTipoConfifencial()) {
-            gardarArquivo("temporalCifrado", peticion.getArquivo());
-            descifradorAsimetrico();
-            arquivo = procesarArquivoByte(path + "docs/temporalSenCifrar");
-            eliminarArquivo(path + "docs/temporalCifrado");
-            eliminarArquivo(path + "docs/temporalSenCifrar");
+             arquivo = descifradorAsimetrico( peticion.getArquivo());
+             peticion.setArquivo(arquivo);
         } else arquivo = peticion.getArquivo();
 
         verifier.update(arquivo);
@@ -379,11 +376,7 @@ public class Servidor extends Thread {
         Documentos novoDocumento = new Documentos(idRexistro, peticion.getCertFirma(), peticion.getNomeArquivo(), seloTemporal, peticion.getTipoConfifencial());
         byte[] arquivoCifrado = null;
         if (peticion.getTipoConfifencial()) {
-            gardarArquivo("temporalCifrado",peticion.getArquivo());
-            descifradorAsimetrico();
-            arquivoCifrado = cifrador(procesarArquivoByte(path + "docs/temporalSenCifrar"));
-            eliminarArquivo(path + "docs/temporalCifrado");
-            eliminarArquivo(path + "docs/temporalSenCifrar");
+            arquivoCifrado = cifrador(peticion.getArquivo());
             listaDocsPrivados.put(novoDocumento.getIdRexistro(), novoDocumento);
         }
         else
@@ -426,11 +419,10 @@ public class Servidor extends Thread {
         return  arquivoByte;
     }
 
-    private static void descifradorAsimetrico() throws KeyStoreException, IOException, UnrecoverableEntryException, NoSuchAlgorithmException, CertificateException, NoSuchProviderException, NoSuchPaddingException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+    private static byte[] descifradorAsimetrico(byte[] arquivoCifrado) throws KeyStoreException, IOException, UnrecoverableEntryException, NoSuchAlgorithmException, CertificateException, NoSuchProviderException, NoSuchPaddingException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         String provider = "SunJCE";
         int longclave 			= 2048;               // NOTA -- Probar a subir este valor e ir viendo como
-        FileInputStream  ftextocifrado2 = new FileInputStream( path + "docs/" + "temporalCifrado");
-        FileOutputStream ftextoclaro2 = new FileOutputStream( path + "docs/" + "temporalSenCifrar");
+
 
         byte bloquecifrado2[] = new byte[(longclave/8)];
         byte bloqueclaro2[] = new byte[512];  // *** Buffer sobredimensionado ***
@@ -469,49 +461,30 @@ public class Servidor extends Thread {
 
         descifrador.init(Cipher.DECRYPT_MODE, privateKey);
 
-
-        // Datos para medidas de velocidad descifrado
-        t = 0; lf = 0; tbi = 0;  tbf = 0;
-
-        while ((longbloque = ftextocifrado2.read(bloquecifrado2)) > 0) {
-
-            lf = lf + longbloque;
-
-            tbi = System.nanoTime();
-
-            bloqueclaro2 = descifrador.update(bloquecifrado2, 0, longbloque);
+        ArrayList<byte[]> a = new ArrayList<>();
+        int n = 0;
+        while (n < arquivoCifrado.length) {
+            for(int i = 0; i < 256; i++) bloquecifrado2[i] = arquivoCifrado[i + n];
+            n += 256;
+            bloqueclaro2 = descifrador.update(bloquecifrado2, 0, 256);
             bloqueclaro2 = descifrador.doFinal();
-
-            tbf = System.nanoTime();
-            t = t + tbf - tbi;
-
-            ftextoclaro2.write(bloqueclaro2);
+            a.add(bloqueclaro2);
         }
-
-
-        ftextocifrado2.close();
-        ftextoclaro2.close();
-
-        // Escribir resultados medida velocidad descifrado
-
-        System.out.println("*** FIN DESCIFRADO " + algoritmo + "-" + longclave
-                + " Provider: " + provider);
-        System.out.println("Bytes  descifrados = " + (int) lf);
-        System.out.println("Tiempo descifrado  = " + t / 1000000 + " mseg");
-        System.out.println("Velocidad = " + (lf * 8 * 1000) / t + " Mpbs");
+        byte[] b = new byte[(245 * (a.size()-1)) + a.get(a.size()-1).length];
+        for(int i = 0 ; i < a.size(); i++)
+            for (int j = 0; j < a.get(i).length; j++)
+                b[j + (245 * i)] = a.get(i)[j];
+        return b;
     }
 
-    private static void cifradorAsimetrico() throws Exception {
+    private static byte[] cifradorAsimetrico(byte[] arquivoSenCifrar) throws Exception {
         String provider = "SunJCE";
-        FileInputStream 	ftextoclaro 	= new FileInputStream(path + "docs/" +  "temporalSenCifrar");
-        FileOutputStream 	ftextocifrado 	= new FileOutputStream(path + "docs/" +  "temporalCifrado");
-
         String algoritmo 		= "RSA";
         String transformacion1 	= "/ECB/PKCS1Padding"; //Relleno de longitud fija de 88 bits (11 bytes)
         String transformacion2 	= "/ECB/OAEPPadding"; // Este relleno tiene una longitud mayor y es variable
         int longclave 			= 2048;               // NOTA -- Probar a subir este valor e ir viendo como
         //         disminuye significativamente la velocidad de descifrado
-        int longbloque;
+        int longbloque = 0;
         long t, tbi, tbf; 	    // tiempos totales y por bucle
         double lf; 				// longitud del fichero
 
@@ -550,36 +523,27 @@ public class Servidor extends Thread {
 
         cifrador.init(Cipher.ENCRYPT_MODE, clavePublicaServer);
 
-
-        // Datos para medidas de velocidad cifrado
-        t = 0; lf = 0; tbi = 0;  tbf = 0;
-
-        while ((longbloque = ftextoclaro.read(bloqueclaro)) > 0) {
-
-            lf = lf + longbloque;
-
-            tbi = System.nanoTime();
-
+        ArrayList<byte[]> a = new ArrayList<>();
+        int n = 0;
+        while (n < arquivoSenCifrar.length) {
+            bloqueclaro = new byte[245];
+            longbloque = 0;
+            for(int i = 0; i < 245; i++) {
+                if(n == arquivoSenCifrar.length)
+                    break;
+                bloqueclaro[i] = arquivoSenCifrar[n];
+                n++;
+                longbloque++;
+            }
             bloquecifrado = cifrador.update(bloqueclaro, 0, longbloque);
             bloquecifrado = cifrador.doFinal();
-
-            tbf = System.nanoTime();
-            t = t + tbf - tbi;
-
-            ftextocifrado.write(bloquecifrado);
+            a.add(bloquecifrado);
         }
-
-        // Escribir resultados velocidad cifrado
-
-        System.out.println("*** FIN CIFRADO " + algoritmo + "-" + longclave
-                + " Provider: " + provider);
-        System.out.println("Bytes  cifrados = " + (int) lf);
-        System.out.println("Tiempo cifrado  = " + t / 1000000 + " mseg");
-        System.out.println("Velocidad       = " + (lf * 8 * 1000) / t + " Mpbs");
-
-        // Cerrar ficheros
-        ftextocifrado.close();
-        ftextoclaro.close();
+        byte[] b = new byte[256 * a.size()];
+        for(int i = 0 ; i < a.size(); i++)
+            for (int j = 0; j < a.get(i).length; j++)
+                b[j + (256 * i)] = a.get(i)[j];
+        return b;
     }
 
     private static void gardarDocumento(DocumentoAlmacenado doc, boolean publico) throws Exception {
@@ -621,11 +585,8 @@ public class Servidor extends Thread {
         if(tipoConfidencial) {
             doc = procesarArquivo(path + "docs/" + nome + idRex + ".sig.cif");
             byte[] arquivoDescifrado = descifrador(doc.getArquivo());
-            gardarArquivo("temporalSenCifrar", arquivoDescifrado);
-            cifradorAsimetrico();
-            arquivo = procesarArquivoByte(path + "docs/temporalCifrado");
-            eliminarArquivo(path + "docs/temporalSenCifrar");
-            eliminarArquivo(path + "docs/temporalCifrado");
+            arquivo =  cifradorAsimetrico(arquivoDescifrado);
+
         } else {
             doc = procesarArquivo(path + "docs/" + nome + idRex + ".sig");
             arquivo = doc.getArquivo();
@@ -738,15 +699,8 @@ public class Servidor extends Thread {
 
         byte[] firma = null;
 
-        if(peticion.getTipoConfifencial()) {
-            gardarArquivo("temporalCifrado", peticion.getArquivo());
-            descifradorAsimetrico();
-            arquivo = procesarArquivoByte(path + "docs/temporalSenCifrar");
-            eliminarArquivo(path + "docs/temporalSenCifrar");
-            eliminarArquivo(path + "docs/temporalCifrado");
-        } else {
-            arquivo = peticion.getArquivo();
-        }
+        arquivo = peticion.getArquivo();
+
 
         byte[] datosFirma = getDatosFirma(idRexistro, seloTemporal, arquivo, peticion.getFirma());
         signer.update(datosFirma);
