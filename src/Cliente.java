@@ -6,6 +6,7 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.*;
 import javax.print.DocFlavor;
 import java.io.*;
+import java.math.BigInteger;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.*;
@@ -20,6 +21,7 @@ public class Cliente {
     private static String nosoTrustStore = "almacenes/truestore_compartido/truestore.jce";
     private static String nosoContrasinalKS = "passclient1";
     private static String nosoContrasinalTS = "passcacerts";
+    private static HashMap<Integer, String> hashDocuments = new HashMap<>();
 
     public static void main(String[] args) {
         int opcion = 5;
@@ -182,7 +184,10 @@ public class Cliente {
         Resposta resposta = procesarResposta(meuSocket.getInputStream());
         System.out.println("Resposta do servidor recibida\n");
         switch (resposta.getIdResposta()) {
-            case 0: if(verificarResposta(resposta, minhaPeticion, arquivoByte)) eliminarArquivo(arquivo.getAbsolutePath());
+            case 0: if(verificarResposta(resposta, minhaPeticion, arquivoByte)){
+                if(tipoConfidencialidade) hashDocuments.put(resposta.getIdRexistro(), computarHash(arquivoByte));
+                eliminarArquivo(arquivo.getAbsolutePath());
+            }
                 break;
 
             case -1: System.out.println("O seu certificado de firma non se atopa no rexistro de confianza do servidor");
@@ -253,6 +258,12 @@ public class Cliente {
             return;
         }
 
+        if(resposta.isTipoConfidencial())
+            if(!computarHash(resposta.getArquivo()).equalsIgnoreCase(hashDocuments.get(resposta.getIdRexistro()))) {
+                System.out.println("DOCUMENTO ALTERADO POLO REXISTRADOR");
+                return;
+            }
+
         gardarArquivo(resposta.getNomeArquivo(), resposta.getArquivo());
         System.out.println("DOCUMENTO RECUPERADO CORRECTAMENTE");
     }
@@ -264,10 +275,17 @@ public class Cliente {
         fos.close();
     }
 
+    private static String computarHash(byte[] doc) throws NoSuchAlgorithmException {
+        MessageDigest digest = MessageDigest.getInstance("SHA-512");
+        digest.reset();
+        digest.update(doc);
+        String hashDocument = String.format("%040x", new BigInteger(1, digest.digest()));
+        return  hashDocument;
+    }
+
     public static boolean verificarFirma(Resposta resposta) throws Exception {
         byte[] firma;
         byte[] arquivo;
-        String certFirma = resposta.getCertFirma();
 
         /* Verificamos a firma */
 
